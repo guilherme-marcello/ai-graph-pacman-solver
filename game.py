@@ -199,7 +199,7 @@ class Direction:
 
     @classmethod
     def get_options(cls):
-        return [cls.NORTH, cls.SOUTH, cls.WEST, cls.EAST]
+        return [cls.NORTH, cls.WEST, cls.EAST, cls.SOUTH]
 
 class NonStaticElement:
     def __init__(self, element: BoardElement) -> None:
