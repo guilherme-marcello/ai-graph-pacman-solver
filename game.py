@@ -21,7 +21,9 @@ class Vector:
     def __hash__(self):
         return hash((self.x, self.y))
 
-    def __eq__(self, other):
+    def __eq__(self, other: object):
+        if not isinstance(other, Vector):
+            return False
         return self.x == other.x and self.y == other.y
 
 
@@ -63,6 +65,18 @@ class BoardElement:
 
     def __str__(self) -> str:
         return str(self.element)
+    
+    def copy(self):
+        x, y = self.position
+        return BoardElement(
+            self.element,
+            Vector(x, y)
+        )
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BoardElement):
+            return False
+        return self.element == other.element and self.position == other.position
 
 class GameConditions:
     def __init__(self, fear_goal: int, supergum_power: int, initial_fear: int) -> None:
@@ -78,8 +92,8 @@ class GameConditions:
             key_value[key] = int(value)
         return cls(
             key_value.get("T"),
-            key_value.get("M"),
-            key_value.get("P")
+            key_value.get("P"),
+            key_value.get("M")
         )
 
     def __str__(self) -> str:
@@ -123,6 +137,10 @@ class Board:
             return True
         return False 
         
+    def copy(self):
+        return Board(
+            [line.copy() for line in self.lines]
+        )
 
     @classmethod
     def from_input(cls, input: list):
@@ -193,6 +211,11 @@ class NonStaticElement:
     def set_position(self, vector: Vector):
         self.element.position = vector
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, NonStaticElement):
+            return False
+        return self.element == other.element
+
     @classmethod
     def from_board(cls, target_element: Element, board: Board):
         for line in board:
@@ -213,8 +236,39 @@ class NonStaticElement:
 
 
 class Pacman(NonStaticElement):
-    def __init__(self, element: BoardElement) -> None:
+    def __init__(self, element: BoardElement, steps: int = 0, visited: dict = dict()) -> None:
         super().__init__(element)
+        self.steps = steps
+        self.visited_positions = visited
+
+    def get_cost(self, vector: Vector) -> int:
+        cost = self.visited_positions.get(vector)
+        return cost if cost else 1
+
+    def get_steps(self) -> int:
+        return self.steps
+    
+    def increase_steps(self):
+        self.steps += 1
+    
+    def mark_as_visited(self, vector: Vector):
+        n_visits = self.visited_positions.get(vector)
+        n_visits = n_visits + 1 if n_visits else 2
+        self.visited_positions[vector] = n_visits
+
+    def copy(self):
+        pacman = Pacman(
+            element=self.element.copy(),
+            steps=self.steps,
+            visited=self.visited_positions.copy()
+        )
+        return pacman
+    
+    def __eq__(self, other: object) -> bool:
+        if not super().__eq__(other):
+            return False
+        other: Pacman = other
+        return self.steps == other.steps and self.visited_positions == other.visited_positions
     
     @classmethod
     def from_board(cls, board: Board):
@@ -246,6 +300,12 @@ class Ghost(NonStaticElement):
             board
         )
     
+    def __eq__(self, other: object) -> bool:
+        if not super().__eq__(other):
+            return False
+        other: Ghost = other
+        return self.fear == other.fear
+    
 class SuperGum:
     @staticmethod
     def find_all(board: Board) -> list:
@@ -271,16 +331,57 @@ class GameState:
         self.board = board
 
     @classmethod
-    def from_board(cls, board: Board):
+    def from_board(cls, board: Board, initial_fear: int):
+        ghost = Ghost.from_board(board)
+        ghost.set_fear(initial_fear)
         return cls(
             Pacman.from_board(board),
-            Ghost.from_board(board),
+            ghost,
             SuperGum.find_all(board),
             board
         )
     
+    def copy(self):
+        current_ghost_fear = self.ghost.get_fear()
+        new = GameState.from_board(
+            self.board.copy(), 
+            current_ghost_fear
+        )
+    
+        new_pacman: Pacman = self.pacman.copy()
+        new.board.put(
+            new_pacman.element,
+            new_pacman.get_position()
+        )
+        new.pacman = new_pacman
+        return new
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GameState):
+            return False
+        other: GameState = other
+        
+        if (self.pacman != other.pacman):
+            return False
+        
+        if (self.ghost != other.ghost):
+            return False
+        
+        if not all(x in self.supergums for x in other.supergums):
+            return False
+        
+        return True
+    
     def __str__(self) -> str:
-        return f"{self.pacman}\n{self.ghost}\n{self.supergums}"
+        string = ""
+
+        string += f"Pacman\nPosicao {self.pacman.get_position()}\nPassos Atuais {self.pacman.get_steps()}\n\n"
+        string += f"Ghost\nPosicao {self.ghost.get_position()}\nMedo Atual {self.ghost.get_fear()}\n\n"
+        string += f"{self.supergums}"
+        return string
+    
+
+
 
 
 class Game:
@@ -305,6 +406,10 @@ class Game:
         if not board_element or board_element.element == Element.WALL:
             return state
         
+        state.ghost.decrease_fear()
+        state.pacman.mark_as_visited(target_pos)
+        state.pacman.increase_steps()
+
         if (board_element.element == Element.SUPER_GUM):
             state.supergums.remove(board_element)
             state.ghost.set_fear(max_fear)
