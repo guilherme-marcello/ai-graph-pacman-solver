@@ -3,6 +3,9 @@ class Vector:
         self.x = x
         self.y = y
 
+    def manhattan_distance(self, other) -> int:
+        return abs(self.x - other.x) + abs(self.y - other.y)
+
     def __str__(self) -> str:
         return f"{(self.x, self.y)}"
     
@@ -103,8 +106,7 @@ class GameConditions:
 class Board:
     def __init__(self, lines: list) -> None:
         self.lines = lines
-        self.nrows = len(lines)
-        self.ncols = len(lines[0])
+        self.dim = len(lines[0])
 
     def __iter__(self):
         return iter(self.lines)
@@ -115,7 +117,7 @@ class Board:
     def _out_of_board(self, x, y) -> bool:
         if x < 0 or y < 0:
             return True
-        if x >= self.ncols or y >= self.nrows:
+        if x >= self.dim or y >= self.dim:
             return True
         return False
     
@@ -129,6 +131,21 @@ class Board:
             self.lines[y][x] = element
             return True
         return False
+    
+
+    def find_closest(self, vector: Vector, element: Element):
+        closest_distance = self.dim
+        closest_position = None
+        for row in range(self.dim):
+            for col in range(self.dim):
+                board_element: BoardElement = self.get(Vector(row, col))
+                if board_element.get_element() == element:
+                    distance = vector.manhattan_distance(board_element.get_position())
+                    if distance < closest_distance:
+                        closest_distance = distance
+                        closest_position = board_element.get_position()
+        
+        return closest_position, closest_distance
     
     def set_empty(self, vector: Vector) -> bool:
         x, y = vector
@@ -330,6 +347,13 @@ class GameState:
         self.supergums = supergums
         self.board = board
 
+    def __iter__(self):
+        yield self.pacman
+        yield self.ghost
+        yield self.supergums
+        yield self.board
+
+
     @classmethod
     def from_board(cls, board: Board, initial_fear: int):
         ghost = Ghost.from_board(board)
@@ -442,7 +466,7 @@ class GameSolver:
             board_element = state.board.get(
                 current_pos + direction
             )
-            if board_element and board_element.element != Element.WALL:
+            if board_element and board_element.element not in (Element.WALL, Element.GHOST):
                 valid_directions.append(
                     Direction.to_string(Direction(direction))
                 )
