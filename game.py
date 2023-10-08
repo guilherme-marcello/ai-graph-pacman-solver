@@ -6,7 +6,7 @@ class Vector:
     def manhattan_distance(self, other) -> int:
         return abs(self.x - other.x) + abs(self.y - other.y)
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return f"{(self.x, self.y)}"
     
     def __iter__(self):
@@ -80,6 +80,9 @@ class BoardElement:
         if not isinstance(other, BoardElement):
             return False
         return self.element == other.element and self.position == other.position
+    
+    def __repr__(self) -> str:
+        return f"{self.element}{self.position}"
 
 class GameConditions:
     def __init__(self, fear_goal: int, supergum_power: int, initial_fear: int) -> None:
@@ -123,12 +126,12 @@ class Board:
     
     def get(self, vector: Vector) -> BoardElement:
         x, y = vector
-        return self.lines[y][x] if not self._out_of_board(x, y) else None
+        return self.lines[x][y] if not self._out_of_board(x, y) else None
     
     def put(self, element: BoardElement, vector: Vector) -> bool:
         x, y = vector
         if not self._out_of_board(x, y):
-            self.lines[y][x] = element
+            self.lines[x][y] = element
             return True
         return False
     
@@ -150,7 +153,7 @@ class Board:
     def set_empty(self, vector: Vector) -> bool:
         x, y = vector
         if not self._out_of_board(x, y):
-            self.lines[y][x] = BoardElement(Element.EMPTY, Vector(x, y))
+            self.lines[x][y] = BoardElement(Element.EMPTY, Vector(x, y))
             return True
         return False 
         
@@ -164,6 +167,8 @@ class Board:
         _output = []
         for row_index in range(0, len(input)):
             row: str = input[row_index]
+            if not len(row):
+                continue
             elements: list = row.split(" ")
             for elem_index in range(0, len(elements)):
                 element = Element.from_string(
@@ -179,18 +184,20 @@ class Board:
     
     def __str__(self) -> str:
         string = ""
-        for line in self.lines:
+        for line_index in range(len(self.lines)):
+            line = self.lines[line_index]
             for element in line:
                 string += f"{element} "
-            string += "\n"
+            if line_index != len(self.lines):
+                string += "\n"
 
         return string
 
 class Direction:
-    NORTH = Vector(0, -1)
-    SOUTH = Vector(0, 1)
-    WEST = Vector(-1, 0)
-    EAST = Vector(1, 0)
+    NORTH = Vector(-1, 0)
+    SOUTH = Vector(1, 0)
+    WEST = Vector(0, -1)
+    EAST = Vector(0, 1)
 
     string_parser = {
         "N": NORTH,
@@ -257,6 +264,8 @@ class Pacman(NonStaticElement):
         super().__init__(element)
         self.steps = steps
         self.visited_positions = visited
+        if not self.visited_positions.get(self.element.get_position()):
+            self.visited_positions[self.element.get_position()] = 2
 
     def get_cost(self, vector: Vector) -> int:
         cost = self.visited_positions.get(vector)
@@ -397,17 +406,13 @@ class GameState:
         return True
     
     def __str__(self) -> str:
-        string = ""
+        string = f"Fear - {self.pacman.get_steps() + self.ghost.get_fear()}\n"
 
-        string += f"Pacman\nPosicao {self.pacman.get_position()}\nPassos Atuais {self.pacman.get_steps()}\n\n"
-        string += f"Ghost\nPosicao {self.ghost.get_position()}\nMedo Atual {self.ghost.get_fear()}\n\n"
-        string += f"{self.supergums}"
+        string += f"Pacman - {self.pacman.get_position()} - steps = {self.pacman.get_steps()} - visited = {self.pacman.visited_positions}\n"
+        string += f"Ghost - {self.ghost.get_position()} - current fear {self.ghost.get_fear()}\n"
+        string += f"{self.supergums}\n"
         return string
     
-
-
-
-
 class Game:
     def __init__(self, conditions: GameConditions, board: Board) -> None:
         self.conditions = conditions
