@@ -24,6 +24,20 @@ class MedoTotal(Problem):
    
     def actions(self, state: GameState):
         state: GameState = state
+        pacman, ghost, supergums, board = state
+        fear_needed = self.conditions.T - (pacman.get_steps() + ghost.get_fear())
+
+        if fear_needed > 0:
+            if not len(supergums):
+                return []
+            
+            _, distant_to_closest_gum = board.find_closest(pacman.get_position(), Element.SUPER_GUM)
+            if distant_to_closest_gum > ghost.get_fear():
+                return []
+            
+            if distant_to_closest_gum + (len(supergums) * self.conditions.P) < fear_needed:
+                return []
+    
         available_actions = GameSolver.find_valid_directions(state)
         return available_actions
         
