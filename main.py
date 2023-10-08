@@ -12,7 +12,7 @@ linha10="= = = = = = = = = =\n"
 grelha=linha1+linha2+linha3+linha4+linha5+linha6+linha7+linha8+linha9+linha10
 mundoStandard=parametros + "\n" + grelha
 
-from searchPlus import Problem
+from searchPlus import Problem, depth_first_graph_search_count
 from game import *
 
 class MedoTotal(Problem):    
@@ -50,8 +50,8 @@ class MedoTotal(Problem):
     def path_cost(self, c: int, state1: GameState, action: str, next_state: GameState):
         pacman_next_position = next_state.pacman.get_position()
 
-        #if state1 == next_state:
-        #    return c
+        if state1 == next_state:
+            return c
         
         movement_cost = state1.pacman.get_cost(pacman_next_position)        
         return c + movement_cost
@@ -59,20 +59,31 @@ class MedoTotal(Problem):
     def goal_test(self, state: GameState):
         return state.pacman.get_steps() == self.conditions.T
     
-    def executa(self,state,actions):
-        """Partindo de state, executa a sequência (lista) de acções (em actions) e devolve o último estado"""
-        nstate=state
-        for a in actions:
-            nstate=self.result(nstate,a)
-        return nstate
+    def executa(p,estado,accoes,verbose=False):
+        """Executa uma sequência de acções a partir do estado devolvendo o triplo formado pelo estado, 
+        pelo custo acumulado e pelo booleano que indica se o objectivo foi ou não atingido. Se o objectivo for atingido
+        antes da sequência ser atingida, devolve-se o estado e o custo corrente.
+        Há o modo verboso e o não verboso, por defeito."""
+        custo = 0
+        for a in accoes:
+            seg = p.result(estado,a)
+            custo = p.path_cost(custo,estado,a,seg)
+            estado = seg
+            objectivo=p.goal_test(estado)
+            if verbose:
+                print(f"Applying action {a}....")
+                print(f"{estado}")
+                print(p.display(estado))
+                print('Custo Total:',custo)
+                print('Atingido o objectivo?', objectivo)
+            if objectivo:
+                break
+        return (estado,custo,objectivo)
     
     def display(self, state: GameState):
         """Devolve a grelha em modo txt"""
         return str(state.board)
 
-
-
-	
 g = MedoTotal()
 
 print(g.board)
