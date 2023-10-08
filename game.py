@@ -18,6 +18,13 @@ class Vector:
         else:
             raise TypeError("Unsupported operand type. You can only add Vector objects.")
 
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+
 class Element:
     WALL = "="
     PACMAN = "@"
@@ -151,38 +158,41 @@ class Direction:
     EAST = Vector(1, 0)
 
     string_parser = {
-        "N" : NORTH,
-        "S" : SOUTH,
-        "W" : WEST,
-        "E" : EAST
+        "N": NORTH,
+        "S": SOUTH,
+        "W": WEST,
+        "E": EAST
     }
 
-    @staticmethod
-    def from_string(direction: str):
-        return Direction.string_parser.get(direction)
+    def __init__(self, vector):
+        self.vector = vector
+
+    @classmethod
+    def from_string(cls, direction: str):
+        return cls(
+            cls.string_parser.get(direction)
+        )
+
+    def to_string(self):
+        for direction, value in Direction.string_parser.items():
+            if value == self.vector:
+                return direction
+        return None
+
+    @classmethod
+    def get_options(cls):
+        return [cls.NORTH, cls.SOUTH, cls.WEST, cls.EAST]
 
 class NonStaticElement:
-    def __init__(self, element: BoardElement, board: Board) -> None:
+    def __init__(self, element: BoardElement) -> None:
         self.element = element
-        self.board = board
-    
-    def move(self, delta: Vector):
-        target_element = self.board.get(
-            self.element.position + delta
-        )
 
-        if not target_element or target_element == Element.WALL:
-            return
-        
-        self.board.set_empty(
-            self.element.position
-        )
-        self.element.position += delta
-        self.board.put(
-            self.element, self.element.position
-        )
-        
+    def get_position(self) -> Vector:
+        return self.element.get_position()
     
+    def set_position(self, vector: Vector):
+        self.element.position = vector
+
     @classmethod
     def from_board(cls, target_element: Element, board: Board):
         for line in board:
@@ -192,8 +202,7 @@ class NonStaticElement:
                 if element.get_element() == target_element:
                     board_element = element
         return cls(
-            board_element,
-            board
+            board_element
         )
     
     def __str__(self) -> str:
@@ -204,8 +213,8 @@ class NonStaticElement:
 
 
 class Pacman(NonStaticElement):
-    def __init__(self, element: BoardElement, board: Board) -> None:
-        super().__init__(element, board)
+    def __init__(self, element: BoardElement) -> None:
+        super().__init__(element)
     
     @classmethod
     def from_board(cls, board: Board):
@@ -217,8 +226,18 @@ class Pacman(NonStaticElement):
 
     
 class Ghost(NonStaticElement):
-    def __init__(self, element: BoardElement, board: Board) -> None:
-        super().__init__(element, board)
+    def __init__(self, element: BoardElement, fear: int = 0) -> None:
+        super().__init__(element)
+        self.fear = fear
+
+    def get_fear(self) -> int:
+        return self.fear
+    
+    def set_fear(self, fear: int):
+        self.fear = fear
+    
+    def decrease_fear(self):
+        self.fear -= 1
     
     @classmethod
     def from_board(cls, board: Board):
@@ -228,8 +247,8 @@ class Ghost(NonStaticElement):
         )
     
 class SuperGum(NonStaticElement):
-    def __init__(self, element: BoardElement, board: Board) -> None:
-        super().__init__(element, board)
+    def __init__(self, element: BoardElement) -> None:
+        super().__init__(element)
 
     @staticmethod
     def find_all(board: Board) -> list:
@@ -240,7 +259,7 @@ class SuperGum(NonStaticElement):
                 element: BoardElement
                 if element.get_element() == Element.SUPER_GUM:
                     gums.append(
-                        NonStaticElement(element, board)
+                        NonStaticElement(element)
                     )
         return gums
 
@@ -248,21 +267,24 @@ class SuperGum(NonStaticElement):
 
 
 class GameState:
-    def __init__(self, pacman: Pacman, ghost: Ghost, supergums: list) -> None:
+    def __init__(self, pacman: Pacman, ghost: Ghost, supergums: list, board: Board) -> None:
         self.pacman = pacman
         self.ghost = ghost
         self.supergums = supergums
+        self.board = board
 
     @classmethod
     def from_board(cls, board: Board):
         return cls(
             Pacman.from_board(board),
             Ghost.from_board(board),
-            SuperGum.find_all(board)
+            SuperGum.find_all(board),
+            board
         )
     
     def __str__(self) -> str:
         return f"{self.pacman}\n{self.ghost}\n{self.supergums}"
+
 
 class Game:
     def __init__(self, conditions: GameConditions, board: Board) -> None:
@@ -270,6 +292,31 @@ class Game:
         self.board = board
         self.state = GameState.from_board(board)
 
+    def get_state(self) -> GameState:
+        return self.state
+    
+    @staticmethod
+    def apply(state: GameState, action: str, max_fear: int):
+        direction = Direction.from_string(action)
+        current_pos = state.pacman.get_position()
+        target_pos = current_pos + direction.vector
+
+        element = state.board.get(
+            target_pos
+        )
+
+        if not element or element == Element.WALL:
+            return state
+        
+        if (element == Element.SUPER_GUM):
+            state.supergums.remove(element)
+            state.ghost.set_fear(max_fear)
+
+        state.board.put(Element.EMPTY, current_pos)
+        state.board.put(state.pacman.element, target_pos)
+        state.pacman.set_position(target_pos)
+
+        return state
 
     @classmethod
     def from_input(cls, text_input: str):
@@ -281,3 +328,20 @@ class Game:
     
     def __str__(self) -> str:
         return f"{self.conditions}\n{self.board}\n{self.state}"
+    
+
+class GameSolver:
+    @staticmethod
+    def find_valid_directions(pacman: Pacman) -> list:
+        current_pos = pacman.get_position()
+        valid_directions = []
+        for direction in Direction.get_options():
+            element = pacman.board.get(
+                current_pos + direction
+            )
+
+            if element and element != Element.WALL:
+                valid_directions.append(
+                    Direction.to_string(direction)
+                )
+        return valid_directions
