@@ -246,10 +246,7 @@ class Ghost(NonStaticElement):
             board
         )
     
-class SuperGum(NonStaticElement):
-    def __init__(self, element: BoardElement) -> None:
-        super().__init__(element)
-
+class SuperGum:
     @staticmethod
     def find_all(board: Board) -> list:
         gums = list()
@@ -259,7 +256,7 @@ class SuperGum(NonStaticElement):
                 element: BoardElement
                 if element.get_element() == Element.SUPER_GUM:
                     gums.append(
-                        NonStaticElement(element)
+                        element
                     )
         return gums
 
@@ -301,18 +298,18 @@ class Game:
         current_pos = state.pacman.get_position()
         target_pos = current_pos + direction.vector
 
-        element = state.board.get(
+        board_element = state.board.get(
             target_pos
         )
 
-        if not element or element == Element.WALL:
+        if not board_element or board_element.element == Element.WALL:
             return state
         
-        if (element == Element.SUPER_GUM):
-            state.supergums.remove(element)
+        if (board_element.element == Element.SUPER_GUM):
+            state.supergums.remove(board_element)
             state.ghost.set_fear(max_fear)
 
-        state.board.put(Element.EMPTY, current_pos)
+        state.board.put(BoardElement(Element.EMPTY, current_pos), current_pos)
         state.board.put(state.pacman.element, target_pos)
         state.pacman.set_position(target_pos)
 
@@ -332,16 +329,16 @@ class Game:
 
 class GameSolver:
     @staticmethod
-    def find_valid_directions(pacman: Pacman) -> list:
+    def find_valid_directions(state: GameState) -> list:
+        pacman = state.pacman
         current_pos = pacman.get_position()
         valid_directions = []
         for direction in Direction.get_options():
-            element = pacman.board.get(
+            board_element = state.board.get(
                 current_pos + direction
             )
-
-            if element and element != Element.WALL:
+            if board_element and board_element.element != Element.WALL:
                 valid_directions.append(
-                    Direction.to_string(direction)
+                    Direction.to_string(Direction(direction))
                 )
         return valid_directions
