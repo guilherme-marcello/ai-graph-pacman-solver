@@ -20,20 +20,30 @@ class MedoTotal(Problem):
         params = situacaoInicial.split("\n")
         self.conditions = GameConditions.from_list(params[:3])
         self.board = Board.from_input(params[3:])
-        self.initial = GameState.from_board(self.board)
+        self.initial = GameState.from_board(self.board, self.conditions.M)
    
     def actions(self, state: GameState):
         state: GameState = state
-        available_actions = GameSolver.find_valid_directions(state.pacman)
+        available_actions = GameSolver.find_valid_directions(state)
         return available_actions
         
         
     def result(self, state: GameState, action: str):
         state: GameState = state
-        return Game.apply(state, action, self.conditions.P)
+        new = state.copy()
+        return Game.apply(new, action, self.conditions.P)
     
-    def path_cost(self, c: int, state1,action,next_state):
-        return c + 0
+    def path_cost(self, c: int, state1: GameState, action: str, next_state: GameState):
+        pacman_next_position = next_state.pacman.get_position()
+
+        #if state1 == next_state:
+        #    return c
+        
+        movement_cost = state1.pacman.get_cost(pacman_next_position)        
+        return c + movement_cost
+    
+    def goal_test(self, state: GameState):
+        return state.pacman.get_steps() == self.conditions.T
     
     def executa(self,state,actions):
         """Partindo de state, executa a sequência (lista) de acções (em actions) e devolve o último estado"""
@@ -42,26 +52,14 @@ class MedoTotal(Problem):
             nstate=self.result(nstate,a)
         return nstate
     
-    def display(self, state):
+    def display(self, state: GameState):
         """Devolve a grelha em modo txt"""
-        print(self.board)
+        return str(state.board)
 
 
 
-m = MedoTotal()
+	
+g = MedoTotal()
 
-inicial = m.initial
-
-m.result(inicial, "S")
-m.result(inicial, "S")
-m.result(inicial, "S")
-m.result(inicial, "S")
-m.result(inicial, "S")
-m.result(inicial, "S")
-m.result(inicial, "N")
-
-
-
-m.display(
-    inicial
-)
+print(g.board)
+print(g.actions(g.initial))
