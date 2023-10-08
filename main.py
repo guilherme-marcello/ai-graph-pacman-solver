@@ -12,7 +12,7 @@ linha10="= = = = = = = = = =\n"
 grelha=linha1+linha2+linha3+linha4+linha5+linha6+linha7+linha8+linha9+linha10
 mundoStandard=parametros + "\n" + grelha
 
-from searchPlus import Problem, depth_first_graph_search_count
+from searchPlus import Problem, depth_first_graph_search
 from game import *
 
 class MedoTotal(Problem):    
