@@ -263,10 +263,10 @@ class NonStaticElement:
 
 
 class Pacman(NonStaticElement):
-    def __init__(self, element: BoardElement, steps: int = 0, visited: dict = dict()) -> None:
+    def __init__(self, element: BoardElement, steps: int = 0, visited: dict = None) -> None:
         super().__init__(element)
         self.steps = steps
-        self.visited_positions = visited
+        self.visited_positions = visited if visited else dict()
         if not self.visited_positions.get(self.element.get_position()):
             self.visited_positions[self.element.get_position()] = 2
 
