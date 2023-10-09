@@ -28,6 +28,9 @@ class Vector:
         if not isinstance(other, Vector):
             return False
         return self.x == other.x and self.y == other.y
+    
+    def __copy__(self):
+        return Vector(self.x, self.y)
 
 
 class Element:
@@ -432,7 +435,7 @@ class Game:
             target_pos
         )
 
-        if not board_element or board_element.element == Element.WALL:
+        if not board_element or board_element.element in (Element.WALL, Element.GHOST):
             return state
         
         state.ghost.decrease_fear()
