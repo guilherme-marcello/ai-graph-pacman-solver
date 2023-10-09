@@ -1,18 +1,33 @@
-parametros="T=26\nM=6\nP=10"
+parametrosB="T=26\nM=6\nP=10"
+linha1B= "= = = = = = = = = =\n"
+linha2B= "= @ . * . . * . . =\n"
+linha3B= "= . = = = = = = . =\n"
+linha4B= "= . = F . . . . . =\n"
+linha5B= "= . = . . . . . . =\n"
+linha6B= "= . = . . . . . . =\n"
+linha7B= "= . = . . . . . . =\n"
+linha8B= "= * . . . . . . . =\n"
+linha9B= "= . . . . . . . . =\n"
+linha10B="= = = = = = = = = =\n"
+grelhaB=linha1B+linha2B+linha3B+linha4B+linha5B+linha6B+linha7B+linha8B+linha9B+linha10B
+mundoStandard=parametrosB + "\n" + grelhaB
+
+
+parametros="T=24\nM=2\nP=7"
 linha1= "= = = = = = = = = =\n"
-linha2= "= @ . * . . * . . =\n"
-linha3= "= . = = = = = = . =\n"
-linha4= "= . = F . . . . . =\n"
+linha2= "= @ . * . . . . . =\n"
+linha3= "= . = = = . = = . =\n"
+linha4= "= . = F . * . . * =\n"
 linha5= "= . = . . . . . . =\n"
 linha6= "= . = . . . . . . =\n"
 linha7= "= . = . . . . . . =\n"
-linha8= "= * . . . . . . . =\n"
-linha9= "= . . . . . . . . =\n"
+linha8= "= . . . . . . . . =\n"
+linha9= "= . . . . . * . . =\n"
 linha10="= = = = = = = = = =\n"
 grelha=linha1+linha2+linha3+linha4+linha5+linha6+linha7+linha8+linha9+linha10
-mundoStandard=parametros + "\n" + grelha
+mundoStandard2=parametros + "\n" + grelha
 
-from searchPlus import Problem, depth_first_graph_search
+from searchPlus import Problem, depth_first_graph_search, depth_first_graph_search_count
 from game import *
 
 class MedoTotal(Problem):    
@@ -35,7 +50,7 @@ class MedoTotal(Problem):
             if distant_to_closest_gum > ghost.get_fear():
                 return []
             
-            if distant_to_closest_gum + (len(supergums) * self.conditions.P) < fear_needed:
+            if distant_to_closest_gum + (len(supergums) * self.conditions.P) < self.conditions.T - pacman.get_steps():
                 return []
     
         available_actions = GameSolver.find_valid_directions(state)
@@ -84,7 +99,27 @@ class MedoTotal(Problem):
         """Devolve a grelha em modo txt"""
         return str(state.board)
 
-g = MedoTotal()
+# g = MedoTotal()
 
-print(g.board)
-print(g.actions(g.initial))
+# print(g.board)
+# print(g.actions(g.initial))
+
+#    3o teste
+gx=MedoTotal(mundoStandard2)
+resultado = depth_first_graph_search(gx)
+if resultado:
+    print("Solução Prof-prim (grafo) com custo", str(resultado.path_cost)+":")
+    print(resultado.solution())
+else:
+    print('Sem Solução')
+
+#    ultimo teste
+# gx=MedoTotal(mundoStandard2)
+# resultado,expandidos = depth_first_graph_search_count(gx)
+# if resultado:
+#     print("Solução Prof-Larg (grafo) com custo", str(resultado.path_cost)+":")
+#     print(resultado.solution())
+# else:
+#     print('Sem Solução')
+# print('Expandidos=',expandidos)
+
