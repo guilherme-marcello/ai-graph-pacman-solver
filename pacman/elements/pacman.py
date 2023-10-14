@@ -1,4 +1,4 @@
-from pacman.elements.common import Element, BoardElement, NonStaticElement
+from pacman.elements import Element, BoardElement, NonStaticElement
 from pacman.space import Vector
 
 class Pacman(NonStaticElement):

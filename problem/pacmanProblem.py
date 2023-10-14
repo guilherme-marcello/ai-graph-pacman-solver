@@ -1,8 +1,6 @@
 from problem.searchPlus import Problem
-from pacman.game.common import GameConditions, GameState
-from pacman.game.solvers import GameSolver
-from pacman.game.board import Board
-from pacman.elements.common import Element
+from pacman.game import GameConditions, GameState, GameSolver, Board
+from pacman.elements import Element
 
 parametrosB="T=26\nM=6\nP=10"
 linha1B= "= = = = = = = = = =\n"

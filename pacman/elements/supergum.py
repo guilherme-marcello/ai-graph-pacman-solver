@@ -1,4 +1,4 @@
-from pacman.elements.common import Element, BoardElement
+from pacman.elements import Element, BoardElement
 
 class SuperGum:
     @staticmethod

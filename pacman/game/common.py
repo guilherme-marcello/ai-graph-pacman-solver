@@ -1,7 +1,5 @@
-from pacman.elements.pacman import Pacman
-from pacman.elements.ghost import Ghost
-from pacman.elements.supergum import SuperGum
-from pacman.game.board import Board
+from pacman.elements import Pacman, Ghost, SuperGum
+from pacman.game import Board
 
 class GameConditions:
     def __init__(self, fear_goal: int, supergum_power: int, initial_fear: int) -> None:

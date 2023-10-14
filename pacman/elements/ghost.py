@@ -1,4 +1,4 @@
-from pacman.elements.common import Element, BoardElement, NonStaticElement
+from pacman.elements import Element, BoardElement, NonStaticElement
 
 class Ghost(NonStaticElement):
     def __init__(self, element: BoardElement, fear: int = 0) -> None:

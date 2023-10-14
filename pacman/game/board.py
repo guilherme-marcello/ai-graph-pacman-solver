@@ -1,5 +1,5 @@
 from pacman.space import Vector
-from pacman.elements.common import Element, BoardElement
+from pacman.elements import Element, BoardElement
 
 class Board:
     def __init__(self, lines: list) -> None:

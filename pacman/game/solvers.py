@@ -1,5 +1,5 @@
-from pacman.game.common import GameState
-from pacman.elements.common import Element, BoardElement
+from pacman.game import GameState
+from pacman.elements import Element, BoardElement
 from pacman.space import Direction
 
 class GameSolver:    
