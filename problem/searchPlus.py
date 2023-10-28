@@ -138,6 +138,52 @@ class Node:
 
 # ______________________________________________________________________________
 
+def is_useful(current_best: Node, competitor: Node) -> bool:
+    """ Given two nodes, return true if the competitor is still useful to expand. False otherwise. """
+    return not current_best or competitor.path_cost < current_best.path_cost
+
+def show_node(node: Node, state_txt: str, goal: bool, best: bool):
+    """ Show representation of a given node """
+    print("---------------------\n")
+    print(state_txt)
+    if goal:
+        print(f"Goal --------- with cost: {node.path_cost}")
+        if best:
+            print(f"The best goal until now") 
+    else:
+        print(f"Cost: {node.path_cost}")
+
+
+class SuperNode:
+    """
+    A node in a search tree with additional information. SuperNode contains a reference to the
+    corresponding Node in the search tree, along with flags to indicate if it represents a goal state
+    and if it was considered useful and the best solution during expansion. This class is used to augment 
+    the functionality of the original Node class and provide enhanced features for search algorithms.
+
+    Attributes:
+        node (Node): The corresponding Node in the search tree.
+        goal (bool): True if this node represents a goal state, False otherwise.
+        useful (bool): True if this node was deemed useful during expansion, False otherwise.
+        best (bool): True if this node was deemed the best solution during expansion. False otherwise.
+
+    Methods:
+        show(func): Display information about the SuperNode using a provided formatting function to display the node state.
+    """
+    def __init__(self, node: Node, goal: bool = False, useful: bool = False) -> None:
+        self.node = node
+        self.goal = goal
+        self.useful = useful
+        self.best = goal and useful
+
+    def show(self, func):
+        show_node(self.node, func(self.node.state), self.goal, self.best)
+
+def nonGoal(frontier: list) -> list:
+    """ return list of nodes in frontier that are not in final state (goal) """
+    return [node for node in frontier if not node.goal]
+
+# ______________________________________________________________________________
 
 class SimpleProblemSolvingAgentProgram:
 
