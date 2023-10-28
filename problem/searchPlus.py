@@ -433,6 +433,74 @@ def iterative_deepening_search(problem):
         if result != 'cutoff':
             return result
 
+def _depth_first_tree_search_all_count(problem: Problem, frontier: list, optimize: bool = False, verbose: bool = False) -> tuple:
+    # Initialize variables to keep track of statistics
+    best_solution = None  # The best solution found
+    n_visited_states = 0  # Number of visited states
+    n_final_states = 0   # Number of final (goal) states encountered
+    max_frontier_len = 0  # Maximum length of the frontier
+
+    # Create the initial Node and add it to the frontier as a SuperNode
+    first = Node(problem.initial)
+    frontier.append(
+        SuperNode(
+            node=first, goal=problem.goal_test(first.state), useful=is_useful(best_solution, first)
+        )
+    )
+
+    # Main loop for the depth-first search
+    while frontier:
+        # Update the maximum frontier length
+        max_frontier_len = max(max_frontier_len, len(nonGoal(frontier))
+
+        # Pop a SuperNode from the frontier for exploration
+        competitor: SuperNode = frontier.pop()
+        node = competitor.node
+        n_visited_states += 1
+
+        # Display information about the SuperNode if verbose mode is enabled
+        if verbose:
+            competitor.show(problem.display)
+
+        # Check if the SuperNode represents a goal state
+        if competitor.goal:
+            n_final_states += 1
+            continue
+
+        # Expand the node and create SuperNodes for its successors
+        successors = node.expand(problem)
+        super_node_successors = []
+
+        for child in successors:
+            successor = SuperNode(
+                child,
+                problem.goal_test(child.state),
+                is_useful(best_solution, child)
+            )
+
+            # Update the best solution if a goal state is reached
+            if successor.useful:
+                if successor.goal:
+                    best_solution = child
+
+            # Skip adding non-useful successors to the frontier if optimization is enabled
+            if optimize and not successor.useful:
+                continue
+
+            super_node_successors.append(successor)
+
+        # Reverse the order of successors to explore deeper first
+        super_node_successors.reverse()
+        frontier.extend(super_node_successors)
+
+    # Return the results as a tuple
+    return (best_solution, max_frontier_len, n_visited_states, n_final_states)
+
+
+def depth_first_tree_search_all_count(problem: Problem, optimal: bool = False, verbose: bool = False) -> tuple:
+    # Wrapper function to start depth-first tree search with default parameters
+    return _depth_first_tree_search_all_count(problem, Stack(), optimal, verbose)
+
 # ______________________________________________________________________________
 # Bidirectional Search
 # Pseudocode from https://webdocs.cs.ualberta.ca/%7Eholte/Publications/MM-AAAI2016.pdf
